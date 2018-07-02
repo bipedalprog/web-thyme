@@ -16,6 +16,8 @@ apply plugin: 'org.springframework.boot'
 
 group = 'com.bipedalprogrammer.journal'
 version = '0.0.1-SNAPSHOT'
+
+
 sourceCompatibility = 1.8
 
 repositories {
@@ -31,7 +33,7 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-social-twitter')
 	compile('org.springframework.boot:spring-boot-starter-thymeleaf')
 	compile('org.springframework.boot:spring-boot-starter-web')
-	compile 'org.elasticsearch.client:elasticsearch-rest-high-level-client:6.1.2'
-	compile 'org.elasticsearch:elasticsearch:6.1.2'
+	compile('org.springframework.boot:spring-boot-configuration-processor')
+	compile group: 'com.orientechnologies', name: 'orientdb-community', version: '3.0.2'
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }

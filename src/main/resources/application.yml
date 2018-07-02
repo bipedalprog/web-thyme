@@ -1,0 +1,6 @@
+orientdb:
+  connectionString: plocal:/home/bipedal/data/webthyme/orient
+  user: admin
+  password: admin
+
+dataPath: /home/bipedal/data/webthyme

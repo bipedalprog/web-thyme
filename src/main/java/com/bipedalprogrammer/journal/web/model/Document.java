@@ -2,6 +2,7 @@ package com.bipedalprogrammer.journal.web.model;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 public class Document {
     private String documentId;
@@ -9,7 +10,8 @@ public class Document {
     private List<Author> authors;
     private String version;
     private Date revisionDate;
-    private String text;
+    private String body;
+    private Set<String> tags;
 
     public Document() {}
 
@@ -53,11 +55,20 @@ public class Document {
         this.revisionDate = revisionDate;
     }
 
-    public String getText() {
-        return text;
+    public String getBody() {
+        return body;
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public void setBody(String body) {
+        this.body = body;
     }
+
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<String> tags) {
+        this.tags = tags;
+    }
+
 }
