@@ -4,3 +4,15 @@ orientdb:
   password: admin
 
 dataPath: /home/bipedal/data/webthyme
+
+---
+spring:
+  profiles: test
+
+
+orientdb:
+  connectionString: memory:test
+  user: admin
+  password: admin
+
+dataPath: /tmp/test

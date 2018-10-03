@@ -59,6 +59,7 @@ public class OrientStore {
         this.pool = new ODatabasePool(this.orientDB, "notebooks", config.getUser(), config.getPassword());
 
         ODatabaseSession db = pool.acquire();
+        db.close();
     }
 
     private void createDataStore() {
