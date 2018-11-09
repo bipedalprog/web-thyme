@@ -34,6 +34,6 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-web')
 	compile('org.springframework.boot:spring-boot-starter-thymeleaf')
 	compile('org.springframework.boot:spring-boot-configuration-processor')
-	compile group: 'com.orientechnologies', name: 'orientdb-community', version: '3.0.2'
+	compile group: 'com.orientechnologies', name: 'orientdb-community', version: '3.0.8'
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }

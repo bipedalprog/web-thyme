@@ -1,10 +1,16 @@
 package com.bipedalprogrammer.journal.web.repository;
 
 import com.bipedalprogrammer.journal.web.config.OrientConfiguration;
+import com.bipedalprogrammer.journal.web.model.Author;
+import com.bipedalprogrammer.journal.web.model.Document;
+import com.bipedalprogrammer.journal.web.model.Notebook;
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.object.db.ODatabaseObjectPool;
+import com.orientechnologies.orient.object.db.OrientDBObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,11 +19,12 @@ import javax.annotation.PreDestroy;
 @Component
 public class OrientStore {
     public static final String DATABASE_NAME = "notebooks";
-    private OrientDB orientDB;
+    private OrientDBObject orientDB;
     private OrientConfiguration config;
-    private ODatabasePool pool;
+    private ODatabaseObjectPool pool;
 
     public static String AUTHOR_SCHEMA = "Authors";
+    public static String AUTHOR_ID = "authorId";
     public static String AUTHOR_FIRST_NAME = "firstName";
     public static String AUTHOR_LAST_NAME = "lastName";
     public static String AUTHOR_EMAIL = "email";
@@ -51,20 +58,31 @@ public class OrientStore {
         this.orientDB.close();
     }
 
+    public ODatabaseObject getSession() {
+        return pool.acquire();
+    }
+
     private void openOrCreateDataStore() {
-        this.orientDB = new OrientDB(config.getConnectionString(), OrientDBConfig.defaultConfig());
+        this.orientDB = new OrientDBObject(config.getConnectionString(), OrientDBConfig.defaultConfig());
         if (!orientDB.exists(DATABASE_NAME)) {
             createDataStore();
         }
-        this.pool = new ODatabasePool(this.orientDB, "notebooks", config.getUser(), config.getPassword());
+        this.pool = new ODatabaseObjectPool(this.orientDB, "notebooks", config.getUser(), config.getPassword());
 
-        ODatabaseSession db = pool.acquire();
+        ODatabaseObject db = pool.acquire();
+
+        //db.getEntityManager().registerEntityClasses("com.bipedalprogrammer.journal.web.model");
+        db.getEntityManager().registerEntityClass(Author.class);
+        db.getEntityManager().registerEntityClass(Document.class);
+        db.getEntityManager().registerEntityClass(Notebook.class);
+
+
         db.close();
     }
 
     private void createDataStore() {
         orientDB.create(DATABASE_NAME, ODatabaseType.PLOCAL);
-        ODatabaseSession db = orientDB.open(DATABASE_NAME, config.getUser(), config.getPassword());
+        ODatabaseObject db = orientDB.open(DATABASE_NAME, config.getUser(), config.getPassword());
         try {
             OSchema schema = db.getMetadata().getSchema();
             if (!schema.existsClass(AUTHOR_SCHEMA)) createAuthorSchema(schema);
@@ -77,6 +95,8 @@ public class OrientStore {
 
     private void createAuthorSchema(OSchema schema) {
         OClass myClass = schema.createClass(AUTHOR_SCHEMA);
+        myClass.createProperty(AUTHOR_ID, OType.STRING).setNotNull(true);
+        myClass.createIndex(AUTHOR_SCHEMA+AUTHOR_ID, OClass.INDEX_TYPE.UNIQUE, AUTHOR_ID);
         myClass.createProperty(AUTHOR_FIRST_NAME, OType.STRING).setNotNull(true);
         myClass.createIndex(AUTHOR_SCHEMA+AUTHOR_FIRST_NAME, OClass.INDEX_TYPE.NOTUNIQUE, AUTHOR_FIRST_NAME);
         myClass.createProperty(AUTHOR_LAST_NAME, OType.STRING).setNotNull(true);
