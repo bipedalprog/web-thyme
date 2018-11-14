@@ -2,16 +2,22 @@ package com.bipedalprogrammer.journal.web.repository;
 
 import com.bipedalprogrammer.journal.web.model.Author;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class AuthorRepository {
     private OrientStore orientStore;
 
     private Logger logger = LoggerFactory.getLogger(AuthorRepository.class);
+    private OSQLSynchQuery<Author> findByEmailAddressQuery = new OSQLSynchQuery<>(FIND_BY_EMAIL_ADDRESS);
+
+    private static final String FIND_BY_EMAIL_ADDRESS = "SELECT FROM Author where emailAddress = ?";
 
     @Autowired
     public AuthorRepository(OrientStore orientStore) {
@@ -55,4 +61,14 @@ public class AuthorRepository {
 
     }
 
+    public Author findByEmailAddress(String emailAddress) {
+        try (ODatabaseObject db = orientStore.getSession()) {
+            List<Author> objs = db.command(findByEmailAddressQuery).execute(emailAddress);
+            return db.detach(objs.get(0), true);
+        } catch (Exception ex) {
+            logger.info("Unable to save author.", ex);
+        }
+
+        return null;
+    }
 }

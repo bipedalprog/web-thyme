@@ -1,5 +1,6 @@
 package com.bipedalprogrammer.journal.web.repository;
 
+import com.bipedalprogrammer.journal.web.config.DatabaseConfiguration;
 import com.bipedalprogrammer.journal.web.config.OrientConfiguration;
 import com.bipedalprogrammer.journal.web.model.Author;
 import com.bipedalprogrammer.journal.web.model.Document;
@@ -20,7 +21,7 @@ import javax.annotation.PreDestroy;
 public class OrientStore {
     public static final String DATABASE_NAME = "notebooks";
     private OrientDBObject orientDB;
-    private OrientConfiguration config;
+    private DatabaseConfiguration config;
     private ODatabaseObjectPool pool;
 
     public static String AUTHOR_SCHEMA = "Authors";
@@ -47,7 +48,7 @@ public class OrientStore {
     public static String NOTEBOOK_BASEPATH = "basePath";
 
     @Autowired
-    public OrientStore(OrientConfiguration config) {
+    public OrientStore(DatabaseConfiguration config) {
         this.config = config;
         openOrCreateDataStore();
     }

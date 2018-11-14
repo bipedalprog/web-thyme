@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
@@ -23,5 +25,15 @@ public class AuthorRepositoryTest {
         Author updated = repository.save(author);
         assertNotNull(updated);
         assertNotNull(updated.getAuthorId());
+    }
+
+    @Test
+    public void loadAuthorByEmail() {
+        Author created = repository.newAuthor("Isaac", "Asimov", "asimmov@example.com");
+        Author stored = repository.save(created);
+        assertNotNull(stored);
+        Author found = repository.findByEmailAddress(stored.getEmailAddress());
+        assertNotNull(found);
+        assertThat(found.getAuthorId(), equalTo(stored.getAuthorId()));
     }
 }
