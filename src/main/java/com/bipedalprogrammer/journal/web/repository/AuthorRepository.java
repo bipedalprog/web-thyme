@@ -16,8 +16,12 @@ public class AuthorRepository {
 
     private Logger logger = LoggerFactory.getLogger(AuthorRepository.class);
     private OSQLSynchQuery<Author> findByEmailAddressQuery = new OSQLSynchQuery<>(FIND_BY_EMAIL_ADDRESS);
+    private OSQLSynchQuery<Author> findByNameQuery = new OSQLSynchQuery<>(FIND_BY_NAME);
+    private OSQLSynchQuery<Author> findAllQuery = new OSQLSynchQuery<>(FIND_ALL);
 
     private static final String FIND_BY_EMAIL_ADDRESS = "SELECT FROM Author where emailAddress = ?";
+    private static final String FIND_BY_NAME = "SELECT FROM Author where firstName = ? AND lastName = ?";
+    private static final String FIND_ALL = "SELECT FROM Author";
 
     @Autowired
     public AuthorRepository(OrientStore orientStore) {
@@ -48,6 +52,10 @@ public class AuthorRepository {
         return null;
     }
 
+    ODatabaseObject getSession() {
+        return orientStore.getSession();
+    }
+
     public Author save(Author author) {
 
         try (ODatabaseObject db = orientStore.getSession()) {
@@ -64,6 +72,30 @@ public class AuthorRepository {
     public Author findByEmailAddress(String emailAddress) {
         try (ODatabaseObject db = orientStore.getSession()) {
             List<Author> objs = db.command(findByEmailAddressQuery).execute(emailAddress);
+            return db.detach(objs.get(0), true);
+        } catch (Exception ex) {
+            logger.info("Unable to save author.", ex);
+        }
+
+        return null;
+    }
+
+    public List<Author> findAll() {
+        try (ODatabaseObject db = orientStore.getSession()) {
+            return db.command(findAllQuery).execute();
+        }
+    }
+
+    public boolean delete(Author author) {
+        try (ODatabaseObject db = orientStore.getSession()) {
+            db.delete(author);
+        }
+        return true;
+    }
+
+    public Author findByName(String firstName, String lastName) {
+        try (ODatabaseObject db = orientStore.getSession()) {
+            List<Author> objs = db.command(findByNameQuery).execute(firstName, lastName);
             return db.detach(objs.get(0), true);
         } catch (Exception ex) {
             logger.info("Unable to save author.", ex);
