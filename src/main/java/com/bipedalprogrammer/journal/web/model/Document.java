@@ -1,14 +1,20 @@
 package com.bipedalprogrammer.journal.web.model;
 
+import javax.persistence.Id;
+import javax.persistence.Version;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 public class Document {
+    @Id
     private String documentId;
+    @Version
+    private Long version;
+
     private String title;
     private List<Author> authors;
-    private String version;
+    private String revision;
     private Date revisionDate;
     private String body;
     private Set<String> tags;
@@ -39,12 +45,12 @@ public class Document {
         this.authors = authors;
     }
 
-    public String getVersion() {
-        return version;
+    public String getRevision() {
+        return revision;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
+    public void setRevision(String revision) {
+        this.revision = revision;
     }
 
     public Date getRevisionDate() {
