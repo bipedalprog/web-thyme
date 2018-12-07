@@ -18,20 +18,20 @@ public class DocumentRepositoryTest {
     @Autowired
     private DocumentRepository repository;
 
-    @Test
-    public void saveShouldAssignId() {
-        List<Author> authorList = new ArrayList<>();
-        authorList.add(new Author("Sample", "Author", "sample@example.com"));
-        Set<String> tags = new HashSet<>();
-        tags.add("test");
-        Document document = repository.newDocument();
-        document.setAuthors(authorList);
-        document.setRevision("1.0");
-        document.setRevisionDate(new Date());
-        document.setBody("We're all bozos on this bus.");
-        document.setTags(tags);
-        Document updated = repository.save(document);
-        assertNotNull(updated);
-        assertNotNull(document.getDocumentId());
-    }
+//    @Test
+//    public void saveShouldAssignId() {
+//        List<Author> authorList = new ArrayList<>();
+//        authorList.add(new Author("Sample", "Author", "sample@example.com"));
+//        Set<String> tags = new HashSet<>();
+//        tags.add("test");
+//        Document document = repository.newDocument();
+//        document.setAuthors(authorList);
+//        document.setRevision("1.0");
+//        document.setRevisionDate(new Date());
+//        document.setBody("We're all bozos on this bus.");
+//        document.setTags(tags);
+//        Document updated = repository.save(document);
+//        assertNotNull(updated);
+//        assertNotNull(document.getDocumentId());
+//    }
 }

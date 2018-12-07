@@ -1,78 +1,83 @@
 package com.bipedalprogrammer.journal.web.repository;
 
 import com.bipedalprogrammer.journal.web.model.Author;
-import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import static com.bipedalprogrammer.journal.web.repository.OrientStore.*;
 
 @Component
 public class AuthorRepository {
     private OrientStore orientStore;
 
     private Logger logger = LoggerFactory.getLogger(AuthorRepository.class);
-    private OSQLSynchQuery<Author> findByEmailAddressQuery = new OSQLSynchQuery<>(FIND_BY_EMAIL_ADDRESS);
-    private OSQLSynchQuery<Author> findByNameQuery = new OSQLSynchQuery<>(FIND_BY_NAME);
-    private OSQLSynchQuery<Author> findAllQuery = new OSQLSynchQuery<>(FIND_ALL);
 
-    private static final String FIND_BY_EMAIL_ADDRESS = "SELECT FROM Author where emailAddress = ?";
-    private static final String FIND_BY_NAME = "SELECT FROM Author where firstName = ? AND lastName = ?";
-    private static final String FIND_ALL = "SELECT FROM Author";
+    private static final String FIND_BY_EMAIL_ADDRESS = "SELECT FROM Authors WHERE email = ?";
+    private static final String FIND_BY_AUTHOR_ID = "SELECT FROM Authors WHERE authorId = ?";
+    private static final String FIND_BY_NAME = "SELECT FROM Authors WHERE firstName = ? AND lastName = ?";
+    private static final String FIND_ALL = "SELECT FROM Authors";
 
     @Autowired
     public AuthorRepository(OrientStore orientStore) {
         this.orientStore = orientStore;
     }
 
-    public Author newAuthor () {
-        try  (ODatabaseObject db = orientStore.getSession()) {
-
-            Author author = db.newInstance(Author.class);
-            return db.detach(author);
-        } catch (Exception ex) {
-            logger.info("Cannot create author.", ex);
-        }
-        return null;
-    }
-
     public Author newAuthor(String firstName, String lastName, String emailAddress) {
-        try (ODatabaseObject db = orientStore.getSession()) {
-            Author author = db.newInstance(Author.class);
-            author.setFirstName(firstName);
-            author.setLastName(lastName);
-            author.setEmailAddress(emailAddress);
-            return db.detach(author, true);
+        try (ODatabaseSession db = orientStore.getSession()) {
+            Long authorId = db.getMetadata().getSequenceLibrary().getSequence(AUTHOR_SEQUENCE).next();
+            OVertex vertex = db.newVertex(AUTHOR_SCHEMA);
+            vertex.setProperty(AUTHOR_ID, authorId);
+            vertex.setProperty(AUTHOR_FIRST_NAME, firstName);
+            vertex.setProperty(AUTHOR_LAST_NAME, lastName);
+            vertex.setProperty(AUTHOR_EMAIL, emailAddress);
+            OVertex saved = db.save(vertex);
+            Author author = new Author(firstName, lastName, emailAddress);
+            author.setAuthorId(authorId);
+            return author;
         } catch (Exception ex) {
             logger.info("Cannot create author.", ex);
         }
         return null;
     }
 
-    ODatabaseObject getSession() {
-        return orientStore.getSession();
-    }
+    public Author update(Author author) {
 
-    public Author save(Author author) {
-
-        try (ODatabaseObject db = orientStore.getSession()) {
-            Author obj = db.save(author);
-            return db.detach(obj, true);
+        try (ODatabaseSession db = orientStore.getSession()) {
+            OVertex vertex = loadAuthor(db, author.getAuthorId());
+            vertex.setProperty(AUTHOR_FIRST_NAME, author.getFirstName());
+            vertex.setProperty(AUTHOR_LAST_NAME, author.getLastName());
+            vertex.setProperty(AUTHOR_EMAIL, author.getEmailAddress());
+            db.save(vertex);
         } catch (Exception ex) {
             logger.info("Unable to save author.", ex);
         }
 
-        return null;
+        return author;
 
     }
 
     public Author findByEmailAddress(String emailAddress) {
-        try (ODatabaseObject db = orientStore.getSession()) {
-            List<Author> objs = db.command(findByEmailAddressQuery).execute(emailAddress);
-            return db.detach(objs.get(0), true);
+        try (ODatabaseSession db = orientStore.getSession()) {
+            OResultSet resultSet = db.query(FIND_BY_EMAIL_ADDRESS, emailAddress);
+            Author author = new Author();
+            if (resultSet.hasNext()) {
+                OResult result = resultSet.next();
+                result.getVertex().ifPresent(v -> {
+                    authorFromVertex(author, v);
+                });
+            }
+            return author;
         } catch (Exception ex) {
             logger.info("Unable to save author.", ex);
         }
@@ -81,26 +86,38 @@ public class AuthorRepository {
     }
 
     public List<Author> findAll() {
-        try (ODatabaseObject db = orientStore.getSession()) {
-            return db.command(findAllQuery).execute();
+        List<Author> authors = new ArrayList<Author>();
+        try (ODatabaseSession db = orientStore.getSession()) {
+            for (ODocument doc : db.browseClass(AUTHOR_SCHEMA)) {
+                doc.asVertex().ifPresent(v -> {
+                    Author author = new Author();
+                    authorFromVertex(author, v);
+                    authors.add(author);
+                });
+            }
         }
+        return authors;
     }
 
     public boolean delete(Author author) {
-        try (ODatabaseObject db = orientStore.getSession()) {
-            db.delete(author);
+        try (ODatabaseSession db = orientStore.getSession()) {
+            OVertex vertex = loadAuthor(db, author.getAuthorId());
+            db.delete(vertex);
         }
         return true;
     }
 
-    public Author findByName(String firstName, String lastName) {
-        try (ODatabaseObject db = orientStore.getSession()) {
-            List<Author> objs = db.command(findByNameQuery).execute(firstName, lastName);
-            return db.detach(objs.get(0), true);
-        } catch (Exception ex) {
-            logger.info("Unable to save author.", ex);
-        }
+    private void authorFromVertex(Author author, OVertex v) {
+        author.setAuthorId(v.getProperty(AUTHOR_ID));
+        author.setFirstName(v.getProperty(AUTHOR_FIRST_NAME));
+        author.setLastName(v.getProperty(AUTHOR_LAST_NAME));
+        author.setEmailAddress(v.getProperty(AUTHOR_EMAIL));
+    }
 
-        return null;
+    private OVertex loadAuthor(ODatabaseSession db, long authorId) {
+        OResultSet vertices = db.query(FIND_BY_AUTHOR_ID, authorId);
+        Optional<OVertex> result = vertices.next().getVertex();
+        if (result.isPresent()) return result.get();
+        else return null;
     }
 }

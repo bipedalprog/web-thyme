@@ -1,80 +1,62 @@
 package com.bipedalprogrammer.journal.web.model;
 
+import com.orientechnologies.orient.core.record.OVertex;
+
 import javax.persistence.Id;
 import javax.persistence.Version;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-public class Document {
-    @Id
-    private String documentId;
-    @Version
-    private Long version;
+import static com.bipedalprogrammer.journal.web.repository.OrientStore.*;
 
-    private String title;
-    private List<Author> authors;
-    private String revision;
-    private Date revisionDate;
-    private String body;
-    private Set<String> tags;
+public class Document {
+    private OVertex vertex;
 
     public Document() {}
 
+    public Document(OVertex vertex) {
+        this.vertex = vertex;
+    }
+
     public String getDocumentId() {
-        return documentId;
+        return vertex.getProperty(DOCUMENT_ID);
     }
 
     public void setDocumentId(String documentId) {
-        this.documentId = documentId;
+        vertex.setProperty(DOCUMENT_ID, documentId);
     }
 
     public String getTitle() {
-        return title;
+        return vertex.getProperty(DOCUMENT_TITLE);
     }
 
     public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public List<Author> getAuthors() {
-        return authors;
-    }
-
-    public void setAuthors(List<Author> authors) {
-        this.authors = authors;
+        vertex.setProperty(DOCUMENT_TITLE, title);
     }
 
     public String getRevision() {
-        return revision;
+        return vertex.getProperty(DOCUMENT_VERSION);
     }
 
     public void setRevision(String revision) {
-        this.revision = revision;
+        vertex.setProperty(DOCUMENT_VERSION, revision);
     }
 
     public Date getRevisionDate() {
-        return revisionDate;
+        return vertex.getProperty(DOCUMENT_REVISION_DATE);
     }
 
     public void setRevisionDate(Date revisionDate) {
-        this.revisionDate = revisionDate;
+        vertex.setProperty(DOCUMENT_REVISION_DATE, revisionDate);
     }
 
     public String getBody() {
-        return body;
+        return vertex.getProperty(DOCUMENT_BODY);
     }
 
     public void setBody(String body) {
-        this.body = body;
-    }
-
-    public Set<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(Set<String> tags) {
-        this.tags = tags;
+        vertex.setProperty(DOCUMENT_BODY, body);
     }
 
 }

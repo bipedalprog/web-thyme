@@ -1,16 +1,7 @@
 package com.bipedalprogrammer.journal.web.model;
 
-import com.orientechnologies.orient.core.id.ORID;
-
-import javax.persistence.Id;
-import javax.persistence.Version;
-
 public class Author {
-    @Id
-    private String authorId;
-    @Version
-    private Long version;
-
+    private long authorId = -1L;
     private String firstName;
     private String lastName;
     private String emailAddress;
@@ -18,13 +9,18 @@ public class Author {
     public Author() {}
 
     public Author(String firstName, String lastName, String emailAddress) {
-        this.authorId = null;
         this.firstName = firstName;
         this.lastName = lastName;
         this.emailAddress = emailAddress;
     }
 
-    public String getAuthorId() { return authorId; }
+    public long getAuthorId() {
+        return authorId;
+    }
+
+    public void setAuthorId(long authorId) {
+        this.authorId = authorId;
+    }
 
     public String getFirstName() {
         return firstName;

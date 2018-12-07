@@ -1,28 +1,28 @@
 package com.bipedalprogrammer.journal.web.repository;
 
 import com.bipedalprogrammer.journal.web.config.DatabaseConfiguration;
-import com.bipedalprogrammer.journal.web.config.OrientConfiguration;
-import com.bipedalprogrammer.journal.web.model.Author;
-import com.bipedalprogrammer.journal.web.model.Document;
-import com.bipedalprogrammer.journal.web.model.Notebook;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.object.db.ODatabaseObjectPool;
-import com.orientechnologies.orient.object.db.OrientDBObject;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
+import java.util.Set;
 
 @Component
 public class OrientStore {
     public static final String DATABASE_NAME = "notebooks";
-    private OrientDBObject orientDB;
+    private OrientDB orientDB;
     private DatabaseConfiguration config;
-    private ODatabaseObjectPool pool;
+    private ODatabasePool pool;
+
+    public static String AUTHOR_SEQUENCE = "AuthorSequence";
+    public static String DOCUMENT_SEQUENCE = "DocumentSequence";
+    public static String NOTEBOOK_SEQUENCE = "NotebookSequence";
 
     public static String AUTHOR_SCHEMA = "Authors";
     public static String AUTHOR_ID = "authorId";
@@ -33,19 +33,20 @@ public class OrientStore {
     public static String DOCUMENT_SCHEMA = "Documents";
     public static String DOCUMENT_ID = "documentId";
     public static String DOCUMENT_TITLE = "title";
-    public static String DOCUMENT_AUTHORS = "authors";
     public static String DOCUMENT_VERSION = "version";
     public static String DOCUMENT_REVISION_DATE = "revisionDate";
     public static String DOCUMENT_BODY = "body";
-    public static String DOCUMENT_TAGS = "tags";
 
     public static String NOTEBOOK_SCHEMA = "Notebooks";
     public static String NOTEBOOK_ID = "notebookId";
     public static String NOTEBOOK_TITLE = "title";
     public static String NOTEBOOK_CREATED = "created";
     public static String NOTEBOOK_UPDATED = "updated";
-    public static String NOTEBOOK_AUTHORS = "authors";
     public static String NOTEBOOK_BASEPATH = "basePath";
+
+    public static String DOCUMENT_AUTHOR_SCHEMA = "DocumentAuthors";
+    public static String NOTEBOOK_AUTHOR_SCHEMA = "NotebookAuthors";
+    public static String NOTEBOOK_DOCUMENT_SCHEMA = "NotebookDocuments";
 
     @Autowired
     public OrientStore(DatabaseConfiguration config) {
@@ -59,76 +60,92 @@ public class OrientStore {
         this.orientDB.close();
     }
 
-    public ODatabaseObject getSession() {
+    ODatabaseSession getSession() {
         return pool.acquire();
     }
 
     private void openOrCreateDataStore() {
-        this.orientDB = new OrientDBObject(config.getConnectionString(), OrientDBConfig.defaultConfig());
+        this.orientDB = new OrientDB(config.getConnectionString(), OrientDBConfig.defaultConfig());
         if (!orientDB.exists(DATABASE_NAME)) {
             createDataStore();
         }
-        this.pool = new ODatabaseObjectPool(this.orientDB, "notebooks", config.getUser(), config.getPassword());
+        this.pool = new ODatabasePool(orientDB, DATABASE_NAME, config.getUser(), config.getPassword());
 
-        ODatabaseObject db = pool.acquire();
-
-        //db.getEntityManager().registerEntityClasses("com.bipedalprogrammer.journal.web.model");
-        db.getEntityManager().registerEntityClass(Author.class);
-        db.getEntityManager().registerEntityClass(Document.class);
-        db.getEntityManager().registerEntityClass(Notebook.class);
-
+        ODatabase db = pool.acquire();
 
         db.close();
     }
 
     private void createDataStore() {
-        orientDB.create(DATABASE_NAME, ODatabaseType.PLOCAL);
-        ODatabaseObject db = orientDB.open(DATABASE_NAME, config.getUser(), config.getPassword());
-        try {
+        ODatabaseType type = config.getConnectionString().startsWith("memory") ?
+                ODatabaseType.MEMORY : ODatabaseType.PLOCAL;
+        orientDB.create(DATABASE_NAME, type);
+        try (ODatabaseSession db = orientDB.open(DATABASE_NAME, config.getUser(), config.getPassword())) {
+            // Create the sequences used in individual verticies.
+            Set<String> sequences = db.getMetadata().getSequenceLibrary().getSequenceNames();
+            if (!sequences.contains(AUTHOR_SEQUENCE)) createSequence(db, AUTHOR_SEQUENCE);
+            if (!sequences.contains(DOCUMENT_SEQUENCE)) createSequence(db, DOCUMENT_SEQUENCE);
+            if (!sequences.contains(NOTEBOOK_SEQUENCE)) createSequence(db, NOTEBOOK_SEQUENCE);
             OSchema schema = db.getMetadata().getSchema();
-            if (!schema.existsClass(AUTHOR_SCHEMA)) createAuthorSchema(schema);
-            if (!schema.existsClass(DOCUMENT_SCHEMA)) createDocumentSchema(schema);
-            if (!schema.existsClass(NOTEBOOK_SCHEMA)) createNotebookSchema(schema);
-        } finally {
-            db.close();
+            // Create the vertex classes.
+            if (!schema.existsClass(AUTHOR_SCHEMA)) createAuthorSchema(db);
+            if (!schema.existsClass(DOCUMENT_SCHEMA)) createDocumentSchema(db);
+            if (!schema.existsClass(NOTEBOOK_SCHEMA)) createNotebookSchema(db);
+            // Create the edge classes.
+            if (!schema.existsClass(DOCUMENT_AUTHOR_SCHEMA)) createDocumentAuthorSchema(db);
+            if (!schema.existsClass(NOTEBOOK_AUTHOR_SCHEMA)) createNotebookAuthorSchema(db);
+            if (!schema.existsClass(NOTEBOOK_DOCUMENT_SCHEMA)) createNotebookDocumentSchema(db);
         }
     }
 
-    private void createAuthorSchema(OSchema schema) {
-        OClass myClass = schema.createClass(AUTHOR_SCHEMA);
-        myClass.createProperty(AUTHOR_ID, OType.STRING).setNotNull(true);
-        myClass.createIndex(AUTHOR_SCHEMA+AUTHOR_ID, OClass.INDEX_TYPE.UNIQUE, AUTHOR_ID);
-        myClass.createProperty(AUTHOR_FIRST_NAME, OType.STRING).setNotNull(true);
-        myClass.createIndex(AUTHOR_SCHEMA+AUTHOR_FIRST_NAME, OClass.INDEX_TYPE.NOTUNIQUE, AUTHOR_FIRST_NAME);
-        myClass.createProperty(AUTHOR_LAST_NAME, OType.STRING).setNotNull(true);
-        myClass.createIndex(AUTHOR_SCHEMA+AUTHOR_LAST_NAME, OClass.INDEX_TYPE.NOTUNIQUE, AUTHOR_LAST_NAME);
-        myClass.createProperty(AUTHOR_EMAIL, OType.STRING).setNotNull(false);
-        myClass.createIndex(AUTHOR_SCHEMA+AUTHOR_EMAIL, OClass.INDEX_TYPE.NOTUNIQUE, AUTHOR_EMAIL);
+    private void createSequence(ODatabaseSession db, String name) {
+        OSequenceLibrary sequenceLibrary = db.getMetadata().getSequenceLibrary();
+        sequenceLibrary.createSequence(name, OSequence.SEQUENCE_TYPE.ORDERED, new OSequence.CreateParams()
+                .setStart(1L).setIncrement(1));
     }
 
-    private void createDocumentSchema(OSchema schema) {
-        OClass myClass = schema.createClass(DOCUMENT_SCHEMA);
-        myClass.createProperty(DOCUMENT_ID, OType.STRING).setNotNull(true);
-        myClass.createIndex(DOCUMENT_SCHEMA+DOCUMENT_ID, OClass.INDEX_TYPE.UNIQUE, DOCUMENT_ID);
-        myClass.createProperty(DOCUMENT_TITLE, OType.STRING).setNotNull(true);
-        myClass.createIndex(DOCUMENT_SCHEMA+DOCUMENT_TITLE, OClass.INDEX_TYPE.NOTUNIQUE, DOCUMENT_TITLE);
-        myClass.createProperty(DOCUMENT_AUTHORS, OType.LINKSET).setNotNull(true);
-        myClass.createIndex(DOCUMENT_SCHEMA+DOCUMENT_AUTHORS, OClass.INDEX_TYPE.NOTUNIQUE, DOCUMENT_AUTHORS);
+    private void createAuthorSchema(ODatabaseSession db) {
+        OClass myClass = db.createVertexClass(AUTHOR_SCHEMA);
+        createIndexedPropery(myClass, true, AUTHOR_SCHEMA, AUTHOR_ID, OType.LONG);
+        createIndexedPropery(myClass, false, AUTHOR_SCHEMA, AUTHOR_FIRST_NAME, OType.STRING);
+        createIndexedPropery(myClass, false, AUTHOR_SCHEMA, AUTHOR_LAST_NAME, OType.STRING);
+        createIndexedPropery(myClass, false, AUTHOR_SCHEMA, AUTHOR_EMAIL, OType.STRING);
+    }
+
+    private void createDocumentSchema(ODatabaseSession db) {
+        OClass myClass = db.createVertexClass(DOCUMENT_SCHEMA);
+        createIndexedPropery(myClass, true, DOCUMENT_SCHEMA, DOCUMENT_ID, OType.LONG);
+        createIndexedPropery(myClass, true, DOCUMENT_SCHEMA, DOCUMENT_TITLE, OType.STRING);
         myClass.createProperty(DOCUMENT_VERSION, OType.STRING).setNotNull(true);
         myClass.createProperty(DOCUMENT_REVISION_DATE, OType.DATE).setNotNull(false);
         myClass.createProperty(DOCUMENT_BODY, OType.STRING).setNotNull(false);
-        myClass.createProperty(DOCUMENT_TAGS, OType.LINKSET).setNotNull(false);
     }
 
-    private void createNotebookSchema(OSchema schema) {
-        OClass myClass = schema.createClass(NOTEBOOK_SCHEMA);
-        myClass.createProperty(NOTEBOOK_ID, OType.STRING).setNotNull(true);
-        myClass.createIndex(NOTEBOOK_SCHEMA+NOTEBOOK_ID, OClass.INDEX_TYPE.UNIQUE,NOTEBOOK_ID);
-        myClass.createProperty(NOTEBOOK_TITLE, OType.STRING).setNotNull(true);
-        myClass.createIndex(NOTEBOOK_SCHEMA+NOTEBOOK_TITLE, OClass.INDEX_TYPE.UNIQUE, NOTEBOOK_TITLE);
+    private void createNotebookSchema(ODatabaseSession db) {
+        OClass myClass = db.createVertexClass(NOTEBOOK_SCHEMA);
+        createIndexedPropery(myClass, true, NOTEBOOK_SCHEMA, NOTEBOOK_ID, OType.LONG);
+        createIndexedPropery(myClass, true, NOTEBOOK_SCHEMA, NOTEBOOK_TITLE, OType.STRING);
         myClass.createProperty(NOTEBOOK_CREATED, OType.DATE).setNotNull(true);
         myClass.createProperty(NOTEBOOK_UPDATED, OType.DATE).setNotNull(true);
-        myClass.createProperty(NOTEBOOK_AUTHORS, OType.LINKSET).setNotNull(true);
         myClass.createProperty(NOTEBOOK_BASEPATH, OType.STRING).setNotNull(true);
     }
+
+    private void createDocumentAuthorSchema(ODatabaseSession db) {
+        OClass myClass = db.createEdgeClass(DOCUMENT_AUTHOR_SCHEMA);
+    }
+
+    private void createNotebookAuthorSchema(ODatabaseSession db) {
+        OClass myClass = db.createEdgeClass(NOTEBOOK_AUTHOR_SCHEMA);
+    }
+
+    private void createNotebookDocumentSchema(ODatabaseSession db) {
+        OClass myClass = db.createEdgeClass(NOTEBOOK_DOCUMENT_SCHEMA);
+    }
+
+    private void createIndexedPropery(OClass myClass, boolean unique, String schemaName, String propertyName, OType type) {
+        myClass.createProperty(propertyName, type).setNotNull(unique);
+        myClass.createIndex(schemaName + propertyName,
+                unique ? OClass.INDEX_TYPE.UNIQUE : OClass.INDEX_TYPE.NOTUNIQUE, propertyName);
+    }
+
 }

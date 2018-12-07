@@ -1,7 +1,7 @@
 package com.bipedalprogrammer.journal.web.repository;
 
 import com.bipedalprogrammer.journal.web.model.Document;
-import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,17 +15,15 @@ public class DocumentRepository {
     }
 
     public Document newDocument() {
-        try (ODatabaseObject db = orientStore.getSession()) {
-            Document document = db.newInstance(Document.class);
-            return db.detach(document, true);
+        try (ODatabaseSession db = orientStore.getSession()) {
         }
+        return null;
     }
 
     public Document save(Document document) {
-        try (ODatabaseObject db = orientStore.getSession()) {
-            Document updated = db.save(document);
-            return db.detach(updated, true);
+        try (ODatabaseSession db = orientStore.getSession()) {
         }
+        return null;
     }
 
 
