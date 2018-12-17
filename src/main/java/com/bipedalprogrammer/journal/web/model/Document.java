@@ -1,62 +1,64 @@
 package com.bipedalprogrammer.journal.web.model;
 
-import com.orientechnologies.orient.core.record.OVertex;
-
-import javax.persistence.Id;
-import javax.persistence.Version;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
-import static com.bipedalprogrammer.journal.web.repository.OrientStore.*;
-
 public class Document {
-    private OVertex vertex;
+    private long documentId = -1L;
+    private String title;
+    private String revision;
+    private Date revisionDate;
+    private String body;
+    private Set<Author> authors = new HashSet<>();
 
     public Document() {}
 
-    public Document(OVertex vertex) {
-        this.vertex = vertex;
+    public long getDocumentId() {
+        return documentId;
     }
 
-    public String getDocumentId() {
-        return vertex.getProperty(DOCUMENT_ID);
-    }
-
-    public void setDocumentId(String documentId) {
-        vertex.setProperty(DOCUMENT_ID, documentId);
+    public void setDocumentId(long documentId) {
+        this.documentId = documentId;
     }
 
     public String getTitle() {
-        return vertex.getProperty(DOCUMENT_TITLE);
+        return title;
     }
 
     public void setTitle(String title) {
-        vertex.setProperty(DOCUMENT_TITLE, title);
+        this.title = title;
     }
 
     public String getRevision() {
-        return vertex.getProperty(DOCUMENT_VERSION);
+        return revision;
     }
 
     public void setRevision(String revision) {
-        vertex.setProperty(DOCUMENT_VERSION, revision);
+        this.revision = revision;
     }
 
     public Date getRevisionDate() {
-        return vertex.getProperty(DOCUMENT_REVISION_DATE);
+        return revisionDate;
     }
 
     public void setRevisionDate(Date revisionDate) {
-        vertex.setProperty(DOCUMENT_REVISION_DATE, revisionDate);
+        this.revisionDate = revisionDate;
     }
 
     public String getBody() {
-        return vertex.getProperty(DOCUMENT_BODY);
+        return body;
     }
 
     public void setBody(String body) {
-        vertex.setProperty(DOCUMENT_BODY, body);
+        this.body = body;
     }
 
+    public Set<Author> getAuthors() {
+        return authors;
+    }
+
+    public void setAuthors(Set<Author> authors) {
+        this.authors = authors;
+    }
 }

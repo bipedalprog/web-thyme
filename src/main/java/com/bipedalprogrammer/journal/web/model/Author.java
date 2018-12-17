@@ -1,7 +1,8 @@
 package com.bipedalprogrammer.journal.web.model;
 
 public class Author {
-    private long authorId = -1L;
+    public static long AUTHOR_DEFAULT_ID = -1L;
+    private long authorId = AUTHOR_DEFAULT_ID;
     private String firstName;
     private String lastName;
     private String emailAddress;

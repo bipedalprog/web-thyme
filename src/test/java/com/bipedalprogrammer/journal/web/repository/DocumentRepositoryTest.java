@@ -16,22 +16,20 @@ import static org.junit.Assert.assertNotNull;
 @SpringBootTest
 public class DocumentRepositoryTest {
     @Autowired
-    private DocumentRepository repository;
+    private Persistor repository;
 
-//    @Test
-//    public void saveShouldAssignId() {
-//        List<Author> authorList = new ArrayList<>();
-//        authorList.add(new Author("Sample", "Author", "sample@example.com"));
-//        Set<String> tags = new HashSet<>();
-//        tags.add("test");
-//        Document document = repository.newDocument();
-//        document.setAuthors(authorList);
-//        document.setRevision("1.0");
-//        document.setRevisionDate(new Date());
-//        document.setBody("We're all bozos on this bus.");
-//        document.setTags(tags);
-//        Document updated = repository.save(document);
-//        assertNotNull(updated);
-//        assertNotNull(document.getDocumentId());
-//    }
+    @Test
+    public void saveShouldAssignId() {
+        Set<Author> authors = new HashSet<>();
+        authors.add(new Author("Sample", "Author", "sample@example.com"));
+        Document document = new Document();
+        document.setTitle("A Test Document");
+        document.setAuthors(authors);
+        document.setRevision("1.0");
+        document.setRevisionDate(new Date());
+        document.setBody("We're all bozos on this bus.");
+        Document updated = repository.newDocument(document);
+        assertNotNull(updated);
+        assertNotNull(document.getDocumentId());
+    }
 }

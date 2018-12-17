@@ -92,9 +92,9 @@ public class OrientStore {
             if (!schema.existsClass(DOCUMENT_SCHEMA)) createDocumentSchema(db);
             if (!schema.existsClass(NOTEBOOK_SCHEMA)) createNotebookSchema(db);
             // Create the edge classes.
-            if (!schema.existsClass(DOCUMENT_AUTHOR_SCHEMA)) createDocumentAuthorSchema(db);
-            if (!schema.existsClass(NOTEBOOK_AUTHOR_SCHEMA)) createNotebookAuthorSchema(db);
-            if (!schema.existsClass(NOTEBOOK_DOCUMENT_SCHEMA)) createNotebookDocumentSchema(db);
+            if (!schema.existsClass(DOCUMENT_AUTHOR_SCHEMA)) createEdgeSchema(db, DOCUMENT_AUTHOR_SCHEMA);
+            if (!schema.existsClass(NOTEBOOK_AUTHOR_SCHEMA)) createEdgeSchema(db, NOTEBOOK_AUTHOR_SCHEMA);
+            if (!schema.existsClass(NOTEBOOK_DOCUMENT_SCHEMA)) createEdgeSchema(db, NOTEBOOK_DOCUMENT_SCHEMA);
         }
     }
 
@@ -130,16 +130,8 @@ public class OrientStore {
         myClass.createProperty(NOTEBOOK_BASEPATH, OType.STRING).setNotNull(true);
     }
 
-    private void createDocumentAuthorSchema(ODatabaseSession db) {
-        OClass myClass = db.createEdgeClass(DOCUMENT_AUTHOR_SCHEMA);
-    }
-
-    private void createNotebookAuthorSchema(ODatabaseSession db) {
-        OClass myClass = db.createEdgeClass(NOTEBOOK_AUTHOR_SCHEMA);
-    }
-
-    private void createNotebookDocumentSchema(ODatabaseSession db) {
-        OClass myClass = db.createEdgeClass(NOTEBOOK_DOCUMENT_SCHEMA);
+    private void createEdgeSchema(ODatabaseSession db, String edgeClass) {
+        OClass myClass = db.createEdgeClass(edgeClass);
     }
 
     private void createIndexedPropery(OClass myClass, boolean unique, String schemaName, String propertyName, OType type) {

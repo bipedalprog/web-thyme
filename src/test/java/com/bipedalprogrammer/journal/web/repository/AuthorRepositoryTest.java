@@ -1,7 +1,7 @@
 package com.bipedalprogrammer.journal.web.repository;
 
 import com.bipedalprogrammer.journal.web.model.Author;
-import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.List;
+import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -20,12 +20,12 @@ import static org.junit.Assert.assertNotNull;
 @SpringBootTest
 public class AuthorRepositoryTest {
     @Autowired
-    private AuthorRepository repository;
+    private Persistor repository;
 
 
     @Before
     public void prepareRepository() {
-        List<Author> priors = repository.findAll();
+        List<Author> priors = repository.findAllAuthors();
         priors.forEach( (a) -> repository.delete(a));
     }
 
@@ -52,6 +52,17 @@ public class AuthorRepositoryTest {
         Author found = repository.findByEmailAddress(created.getEmailAddress());
         assertNotNull(found);
         assertThat(found.getAuthorId(), equalTo(created.getAuthorId()));
+    }
+
+    @Test
+    public void findAuthorsByEmail() {
+        Author thing1 = repository.newAuthor("Thing", "One", "thing1@example.com");
+        Author thing2 = repository.newAuthor("Thing", "Two", "thing2@example.com");
+        List<String> emails = Arrays.asList(new String[]{"thing1@example.com", "thing2@example.com"});
+        Set<String> lookup = new HashSet<>();
+        lookup.addAll(emails);
+        Set<OVertex> found = repository.getVerticiesByEmailAddress(lookup);
+        assertEquals(2, found.size());
     }
 
 //    @Test
