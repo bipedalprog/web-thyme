@@ -132,6 +132,7 @@ public class OrientStore {
 
     private void createEdgeSchema(ODatabaseSession db, String edgeClass) {
         OClass myClass = db.createEdgeClass(edgeClass);
+        assert myClass != null;
     }
 
     private void createIndexedPropery(OClass myClass, boolean unique, String schemaName, String propertyName, OType type) {

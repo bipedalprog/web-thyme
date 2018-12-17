@@ -132,19 +132,24 @@ public class Persistor {
                 });
             }
             rs.close();
+            // TODO See if we have added any authors.
             return document;
         }
     }
 
-    public Document findByDocumentId(Long documentId) {
+    public Document findByDocumentId(Long documentId, boolean deepFind) {
         try (ODatabaseSession db = orientStore.getSession()) {
             OResultSet rs = db.query("SELECT FROM Documents WHERE documentId = ?", documentId);
-            AtomicReference<Document> found = null;
+            AtomicReference<OVertex> found = null;
             if (rs.hasNext()) {
-                rs.next().getVertex().ifPresent(v -> found.set(documentFromVertex(v)));
+                rs.next().getVertex().ifPresent(v -> found.set(v));
             }
             rs.close();
-            return found.get();
+            Document document = documentFromVertex(found.get());
+            if (deepFind) {
+                loadDocumentAuthors(db, found.get(), document);
+            }
+            return document;
         }
     }
 
@@ -231,10 +236,7 @@ public class Persistor {
                     logger.warn("Document contained an invalid aothorId [" + author.getAuthorId() + "].");
                 }
                 if (!documentAuthorEdgeExists(existing, vertex)) {
-                    OEdge documentAuthor = db.newEdge(document, vertex, DOCUMENT_AUTHOR_SCHEMA);
-                    if (documentAuthor == null) {
-                        logger.error("Unable to create edge from document to author.");
-                    }
+                    addDocumentAuthor(db, document, vertex);
                 }
             } else {
                 OVertex vertex = createAuthor(db, author.getFirstName(), author.getLastName(), author.getEmailAddress());
@@ -244,10 +246,7 @@ public class Persistor {
                 } else {
                     logger.warn("Cannot add author to store.");
                 }
-                OEdge documentAuthor = db.newEdge(document, vertex, DOCUMENT_AUTHOR_SCHEMA);
-                if (documentAuthor == null) {
-                    logger.error("Unable to create edge from document to author.");
-                }
+                addDocumentAuthor(db, document, vertex);
             }
         }
         return  vertices;
@@ -256,5 +255,29 @@ public class Persistor {
     private boolean documentAuthorEdgeExists(Iterable<OVertex> existing, OVertex author) {
         return StreamSupport.stream(existing.spliterator(), true)
                 .anyMatch(v -> v.getProperty(AUTHOR_ID) == author.getProperty(AUTHOR_ID));
+    }
+
+    private OEdge addDocumentAuthor(ODatabaseSession db, OVertex document, OVertex author) {
+        OEdge documentAuthor = db.newEdge(document, author, DOCUMENT_AUTHOR_SCHEMA);
+        if (documentAuthor == null) {
+            logger.error("Unable to create edge from document " + document.getProperty(DOCUMENT_ID)
+                    + "to author " + author.getProperty(AUTHOR_ID) + ".");
+        }
+        ODocument saved = db.save(documentAuthor);
+        if (saved == null) {
+            logger.error("Edge was not saved to database.");
+        }
+        if (saved.asEdge().isPresent()) return saved.asEdge().get();
+        else return null;
+
+    }
+
+    private void loadDocumentAuthors(ODatabaseSession db, OVertex from, Document document) {
+        Iterable<OVertex> existing = from.getVertices(ODirection.OUT, DOCUMENT_AUTHOR_SCHEMA);
+        existing.forEach( v -> {
+            Author author = new Author();
+            authorFromVertex(author, v);
+            document.getAuthors().add(author);
+        });
     }
 }
