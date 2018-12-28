@@ -24,6 +24,7 @@ import static com.bipedalprogrammer.journal.web.repository.OrientStore.AUTHOR_EM
 
 @Component
 public class Persistor {
+    public static final String FIND_DOCUMENTS_BY_ID = "SELECT FROM Documents WHERE documentId = ?";
     private OrientStore orientStore;
 
     private Logger logger = LoggerFactory.getLogger(Persistor.class);
@@ -86,6 +87,22 @@ public class Persistor {
         return null;
     }
 
+    public List<Author> findAuthorByName(String firstName, String lastName) {
+        List<Author> authors = new ArrayList<>();
+        try (ODatabaseSession db = orientStore.getSession()) {
+            try (OResultSet rs = db.query(FIND_BY_NAME, firstName, lastName)) {
+                while (rs.hasNext()) {
+                    rs.next().getVertex().ifPresent(v -> {
+                        Author author = new Author();
+                        authorFromVertex(author, v);
+                        authors.add(author);
+                    });
+                }
+            }
+        }
+        return authors;
+    }
+
     public List<Author> findAllAuthors() {
         List<Author> authors = new ArrayList<Author>();
         try (ODatabaseSession db = orientStore.getSession()) {
@@ -124,22 +141,28 @@ public class Persistor {
 
     public Document save(Document document) {
         try (ODatabaseSession db = orientStore.getSession()) {
-            OResultSet rs = db.query("SELECT FROM Documents WHERE documentId = ?", document.getDocumentId());
-            if (rs.hasNext()) {
-                rs.next().getVertex().ifPresent(v -> {
-                    setVertexProperties(v, document);
-                    db.save(v);
-                });
+            AtomicReference<OVertex> vertexRef = new AtomicReference<>();
+            try (OResultSet rs = db.query(FIND_DOCUMENTS_BY_ID, document.getDocumentId())) {
+                if (rs.hasNext()) {
+                    rs.next().getVertex().ifPresent(v -> {
+                        setVertexProperties(v, document);
+                        vertexRef.set(db.save(v));
+                    });
+                } else {
+                    logger.warn("Document id " + document.getDocumentId() + "not found. Save failed.");
+                    return null;
+                }
             }
-            rs.close();
             // TODO See if we have added any authors.
+
+            Set<OVertex> authors = resolveAuthors(db, vertexRef.get(), document.getAuthors());
             return document;
         }
     }
 
     public Document findByDocumentId(Long documentId, boolean deepFind) {
         try (ODatabaseSession db = orientStore.getSession()) {
-            OResultSet rs = db.query("SELECT FROM Documents WHERE documentId = ?", documentId);
+            OResultSet rs = db.query(FIND_DOCUMENTS_BY_ID, documentId);
             AtomicReference<OVertex> found = null;
             if (rs.hasNext()) {
                 rs.next().getVertex().ifPresent(v -> found.set(v));
@@ -166,7 +189,7 @@ public class Persistor {
         }
     }
 
-    public Set<OVertex> getVerticiesByEmailAddress(Set<String> emails) {
+    private Set<OVertex> getVerticiesByEmailAddress(Set<String> emails) {
         try (ODatabaseSession db = orientStore.getSession()) {
             OResultSet resultSet = db.query("SELECT FROM Authors WHERE email in ?", emails);
             Set<OVertex> found = new HashSet<>();

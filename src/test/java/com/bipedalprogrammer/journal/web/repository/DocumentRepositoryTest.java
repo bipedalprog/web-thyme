@@ -14,8 +14,7 @@ import static com.bipedalprogrammer.journal.web.model.Author.AUTHOR_DEFAULT_ID;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -58,5 +57,8 @@ public class DocumentRepositoryTest {
         updated.getAuthors().add(new Author("Updated", "Author", "updated@example.com"));
         Document mutated = repository.save(updated);
         assertNotNull(mutated);
+        assertTrue(mutated.getAuthors().stream()
+                .anyMatch(a -> {return a.getEmailAddress().compareTo("updated@example.com") == 0;}));
+        assertTrue(mutated.getAuthors().stream().allMatch(a -> {return a.getAuthorId() != AUTHOR_DEFAULT_ID;}));
     }
 }

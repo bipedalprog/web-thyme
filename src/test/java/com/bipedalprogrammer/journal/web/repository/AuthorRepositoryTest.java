@@ -55,23 +55,12 @@ public class AuthorRepositoryTest {
     }
 
     @Test
-    public void findAuthorsByEmail() {
-        Author thing1 = repository.newAuthor("Thing", "One", "thing1@example.com");
-        Author thing2 = repository.newAuthor("Thing", "Two", "thing2@example.com");
-        List<String> emails = Arrays.asList(new String[]{"thing1@example.com", "thing2@example.com"});
-        Set<String> lookup = new HashSet<>();
-        lookup.addAll(emails);
-        Set<OVertex> found = repository.getVerticiesByEmailAddress(lookup);
-        assertEquals(2, found.size());
+    public void loadAuthorByName() {
+        Author created = repository.newAuthor("Isaac", "Asimov", "asimmov@example.com");
+        Author stored = repository.update(created);
+        assertNotNull(stored);
+        List<Author> found = repository.findAuthorByName(stored.getFirstName(), stored.getLastName());
+        assertNotNull(found);
+        assertThat(found.get(0).getAuthorId(), equalTo(stored.getAuthorId()));
     }
-
-//    @Test
-//    public void loadAuthorByName() {
-//        Author created = repository.newAuthor("Isaac", "Asimov", "asimmov@example.com");
-//        Author stored = repository.update(created);
-//        assertNotNull(stored);
-//        Author found = repository.findByName(stored.getFirstName(), stored.getLastName());
-//        assertNotNull(found);
-//        assertThat(found.getAuthorId(), equalTo(stored.getAuthorId()));
-//    }
 }
