@@ -8,7 +8,6 @@ public class Notebook {
     private String title;
     private Date created;
     private Date updated;
-    private List<Author> authors;
     private String basePath;
 
     public Notebook() {
@@ -45,14 +44,6 @@ public class Notebook {
 
     public void setUpdated(Date updated) {
         this.updated = updated;
-    }
-
-    public List<Author> getAuthors() {
-        return authors;
-    }
-
-    public void setAuthors(List<Author> authors) {
-        this.authors = authors;
     }
 
     public String getBasePath() {

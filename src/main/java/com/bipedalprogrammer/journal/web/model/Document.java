@@ -1,31 +1,24 @@
 package com.bipedalprogrammer.journal.web.model;
 
-import javax.persistence.Id;
-import javax.persistence.Version;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 public class Document {
-    @Id
-    private String documentId;
-    @Version
-    private Long version;
-
+    private long documentId = -1L;
     private String title;
-    private List<Author> authors;
     private String revision;
     private Date revisionDate;
     private String body;
-    private Set<String> tags;
+    private Set<Author> authors = new HashSet<>();
 
     public Document() {}
 
-    public String getDocumentId() {
+    public long getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(String documentId) {
+    public void setDocumentId(long documentId) {
         this.documentId = documentId;
     }
 
@@ -35,14 +28,6 @@ public class Document {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public List<Author> getAuthors() {
-        return authors;
-    }
-
-    public void setAuthors(List<Author> authors) {
-        this.authors = authors;
     }
 
     public String getRevision() {
@@ -69,12 +54,11 @@ public class Document {
         this.body = body;
     }
 
-    public Set<String> getTags() {
-        return tags;
+    public Set<Author> getAuthors() {
+        return authors;
     }
 
-    public void setTags(Set<String> tags) {
-        this.tags = tags;
+    public void setAuthors(Set<Author> authors) {
+        this.authors = authors;
     }
-
 }
