@@ -26,6 +26,9 @@ repositories {
     mavenCentral()
 }
 
+bootRun {
+    jvmArgs = ["-Dstorage.wal.allowDirectIO=false"]
+}
 
 dependencies {
     compile('org.springframework.boot:spring-boot-starter-actuator')

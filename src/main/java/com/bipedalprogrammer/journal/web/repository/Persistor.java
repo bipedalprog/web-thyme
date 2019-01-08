@@ -24,12 +24,12 @@ import static com.bipedalprogrammer.journal.web.repository.OrientStore.AUTHOR_EM
 
 @Component
 public class Persistor {
-    public static final String FIND_DOCUMENTS_BY_ID = "SELECT FROM Documents WHERE documentId = ?";
     private OrientStore orientStore;
 
     private Logger logger = LoggerFactory.getLogger(Persistor.class);
 
-    private static String FIND_AUTHOR_BY_ID = "SELECT FROM Authors where authorId = ?";
+    private static final String FIND_DOCUMENTS_BY_ID = "SELECT FROM Documents WHERE documentId = ?";
+    private static final String FIND_AUTHOR_BY_ID = "SELECT FROM Authors where authorId = ?";
     private static final String FIND_BY_EMAIL_ADDRESS = "SELECT FROM Authors WHERE email = ?";
     private static final String FIND_BY_AUTHOR_ID = "SELECT FROM Authors WHERE authorId = ?";
     private static final String FIND_BY_NAME = "SELECT FROM Authors WHERE firstName = ? AND lastName = ?";
