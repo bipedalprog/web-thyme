@@ -11,6 +11,9 @@ public class ThymeController {
         return "browse";
     }
 
+    @GetMapping("/login")
+    public String getLoginPage(Model model) { return "login"; }
+
     @GetMapping("/")
     public String getIndex(Model model) { return "index"; }
 }

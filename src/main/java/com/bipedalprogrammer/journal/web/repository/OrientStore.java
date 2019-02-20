@@ -44,9 +44,16 @@ public class OrientStore {
     public static String NOTEBOOK_UPDATED = "updated";
     public static String NOTEBOOK_BASEPATH = "basePath";
 
+    public static String USER_USERNAME = "userName";
+    public static String USER_PASSWORD = "password";
+    public static String USER_EMAIL = "email";
+    public static String USER_ENABLED = "enabled";
+    public static String USER_ROLES = "roles";
+
     public static String DOCUMENT_AUTHOR_SCHEMA = "DocumentAuthors";
     public static String NOTEBOOK_AUTHOR_SCHEMA = "NotebookAuthors";
     public static String NOTEBOOK_DOCUMENT_SCHEMA = "NotebookDocuments";
+    public static String USER_SCHEMA = "Users";
 
     @Autowired
     public OrientStore(DatabaseConfiguration config) {
@@ -91,6 +98,7 @@ public class OrientStore {
             if (!schema.existsClass(AUTHOR_SCHEMA)) createAuthorSchema(db);
             if (!schema.existsClass(DOCUMENT_SCHEMA)) createDocumentSchema(db);
             if (!schema.existsClass(NOTEBOOK_SCHEMA)) createNotebookSchema(db);
+            if (!schema.existsClass(USER_SCHEMA)) createUserSchema(db);
             // Create the edge classes.
             if (!schema.existsClass(DOCUMENT_AUTHOR_SCHEMA)) createEdgeSchema(db, DOCUMENT_AUTHOR_SCHEMA);
             if (!schema.existsClass(NOTEBOOK_AUTHOR_SCHEMA)) createEdgeSchema(db, NOTEBOOK_AUTHOR_SCHEMA);
@@ -128,6 +136,14 @@ public class OrientStore {
         myClass.createProperty(NOTEBOOK_CREATED, OType.DATE).setNotNull(true);
         myClass.createProperty(NOTEBOOK_UPDATED, OType.DATE).setNotNull(true);
         myClass.createProperty(NOTEBOOK_BASEPATH, OType.STRING).setNotNull(true);
+    }
+
+    private void createUserSchema(ODatabaseSession db) {
+        OClass myClass = db.createVertexClass(USER_SCHEMA);
+        createIndexedPropery(myClass, true, USER_SCHEMA, USER_EMAIL, OType.STRING);
+        createIndexedPropery(myClass, false, USER_SCHEMA, USER_PASSWORD, OType.STRING);
+        myClass.createProperty(USER_ENABLED, OType.BOOLEAN);
+        myClass.createProperty(USER_ROLES, OType.STRING).setNotNull(true);
     }
 
     private void createEdgeSchema(ODatabaseSession db, String edgeClass) {

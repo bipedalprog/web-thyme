@@ -20,7 +20,6 @@ import java.util.stream.StreamSupport;
 
 import static com.bipedalprogrammer.journal.web.model.Author.AUTHOR_DEFAULT_ID;
 import static com.bipedalprogrammer.journal.web.repository.OrientStore.*;
-import static com.bipedalprogrammer.journal.web.repository.OrientStore.AUTHOR_EMAIL;
 
 @Component
 public class Persistor {
@@ -156,22 +155,6 @@ public class Persistor {
             // TODO See if we have added any authors.
 
             Set<OVertex> authors = resolveAuthors(db, vertexRef.get(), document.getAuthors());
-            return document;
-        }
-    }
-
-    public Document findByDocumentId(Long documentId, boolean deepFind) {
-        try (ODatabaseSession db = orientStore.getSession()) {
-            OResultSet rs = db.query(FIND_DOCUMENTS_BY_ID, documentId);
-            AtomicReference<OVertex> found = null;
-            if (rs.hasNext()) {
-                rs.next().getVertex().ifPresent(v -> found.set(v));
-            }
-            rs.close();
-            Document document = documentFromVertex(found.get());
-            if (deepFind) {
-                loadDocumentAuthors(db, found.get(), document);
-            }
             return document;
         }
     }
