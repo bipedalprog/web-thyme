@@ -37,6 +37,6 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-thymeleaf:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}")
-    compile group: 'com.orientechnologies', name: 'orientdb-community', version: '3.0.13'
+    compile group: 'com.orientechnologies', name: 'orientdb-community', version: '3.0.15'
     testCompile("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
 }
