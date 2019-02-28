@@ -44,7 +44,6 @@ public class OrientStore {
     public static String NOTEBOOK_UPDATED = "updated";
     public static String NOTEBOOK_BASEPATH = "basePath";
 
-    public static String USER_USERNAME = "userName";
     public static String USER_PASSWORD = "password";
     public static String USER_EMAIL = "email";
     public static String USER_ENABLED = "enabled";

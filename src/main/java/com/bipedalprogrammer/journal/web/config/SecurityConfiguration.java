@@ -21,16 +21,19 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeRequests()
 
-                .antMatchers("/edit", "/list")
-                .access("hasRole('ROLE_USER')")
-                .antMatchers("/", "/**").access("permitAll")
+                .anyRequest()
+                .permitAll()
+                .and().csrf().disable();
+//                .antMatchers("/edit", "/list")
+//                .access("hasRole('ROLE_USER')")
+//                .antMatchers("/", "/**").access("permitAll")
 
-                .and()
-                .formLogin()
-                .loginPage("/login")
-                .defaultSuccessUrl("/home")
+//                .and()
+//                .formLogin()
+//                .loginPage("/login")
+//                .defaultSuccessUrl("/home")
 
-        ;
+//        ;
     }
 
     @Bean
